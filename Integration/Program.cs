@@ -1,29 +1,37 @@
-﻿using Integration.Service;
+﻿using Integration.Common;
+using Integration.Service;
 
 namespace Integration;
 
 public abstract class Program
 {
+    static ItemIntegrationService _service = new ItemIntegrationService();
     public static void Main(string[] args)
     {
-        var service = new ItemIntegrationService();
+        for(int i = 0; i < 5; i++)
+        {
+            var newThread = new Thread(new ThreadStart(ThreadProc))
+            {
+                Name = $"Thread{i + 1}"
+            };
+            newThread.Start();
+        }
         
-        ThreadPool.QueueUserWorkItem(_ => service.SaveItem("a"));
-        ThreadPool.QueueUserWorkItem(_ => service.SaveItem("b"));
-        ThreadPool.QueueUserWorkItem(_ => service.SaveItem("c"));
-
-        Thread.Sleep(500);
-
-        ThreadPool.QueueUserWorkItem(_ => service.SaveItem("a"));
-        ThreadPool.QueueUserWorkItem(_ => service.SaveItem("b"));
-        ThreadPool.QueueUserWorkItem(_ => service.SaveItem("c"));
-
-        Thread.Sleep(5000);
-
+        Thread.Sleep(10000);
+        
         Console.WriteLine("Everything recorded:");
-
-        service.GetAllItems().ForEach(Console.WriteLine);
-
+        
+        var allItems=_service.GetAllItems();
+            allItems.ForEach(Console.WriteLine);
+        
         Console.ReadLine();
+        
+    }
+
+    static void ThreadProc()
+    {
+        ThreadPool.QueueUserWorkItem(_ => _service.SaveItem("a").Wait());
+        ThreadPool.QueueUserWorkItem(_ => _service.SaveItem("b").Wait());
+        ThreadPool.QueueUserWorkItem(_ => _service.SaveItem("c").Wait());
     }
 }
